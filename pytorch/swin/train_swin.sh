@@ -1,0 +1,1 @@
+python train_swin.py --cfg ./configs/swin_base_384.yaml

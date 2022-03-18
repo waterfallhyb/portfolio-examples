@@ -1,0 +1,102 @@
+DATA:
+  DATA_PATH: '/localdata/cn-customer-engineering/gongboh/workspace/imagenet'
+  DATASET: 'imagenet'
+  IMG_SIZE: [384,384]
+  INTERPOLATION: 'bicubic'
+  ZIP_MODE: False
+  CACHE_MODE: 'part'
+  PIN_MEMORY: True
+  NUM_WORKERS: 8
+  BATCH_SIZE: 1
+
+TRAIN:
+  START_EPOCH: 0
+  EPOCHS: 30
+  WARMUP_EPOCHS: 5
+  WEIGHT_DECAY: 1e-8
+  BASE_LR: 5e-05
+  WARMUP_LR: 2e-08
+  MIN_LR: 2e-07
+  # Clip gradient norm
+  CLIP_GRAD: 5.0
+  # Auto resume from latest checkpoint
+  AUTO_RESUME: True
+  # Gradient accumulation steps
+  # could be overwritten by command line argument
+  ACCUMULATION_STEPS: 0
+  # Whether to use gradient checkpointing to save memory
+  # could be overwritten by command line argument
+  USE_CHECKPOINT: False
+
+  # LR scheduler
+  LR_SCHEDULER:
+    NAME: 'cosine'
+    # Epoch interval to decay LR, used in StepLRScheduler
+    DECAY_EPOCHS: 30
+    # LR decay rate, used in StepLRScheduler
+    DECAY_RATE: 0.1
+
+  LOSS_SCALING: 1024
+  # Optimizer
+  OPTIMIZER:
+    NAME: 'adamw'
+    # Optimizer Epsilon
+    EPS: 1e-8
+    # Optimizer Betas
+    BETAS: (0.9, 0.999)
+    # SGD momentum
+    MOMENTUM: 0.9
+
+OUTPUT: './output/sota_224_finetune_384_grad_norm_mean_loss_5e-5lr/'
+PRETRAINED: './sota_model/swin_base_patch4_window7_224.pth'
+PRECISION: ['half','half']
+AUG:
+  SSL_AUG: True
+  COLOR_JITTER: 0.4
+  # Use AutoAugment policy. "v0" or "original"
+  AUTO_AUGMENT: 'rand-m9-mstd0.5-inc1'
+  # Random erase prob
+  REPROB: 0.25
+  # Random erase mode
+  REMODE: 'pixel'
+  # Random erase count
+  RECOUNT: 1
+  # Mixup alpha, mixup enabled if > 0
+  MIXUP: 0.8
+  # Cutmix alpha, cutmix enabled if > 0
+  CUTMIX: 1.0
+  # Cutmix min/max ratio, overrides alpha and enables cutmix if set
+  CUTMIX_MINMAX: None
+  # Probability of performing mixup or cutmix when either/both is enabled
+  MIXUP_PROB: 1.0
+  # Probability of switching to cutmix when both mixup and cutmix enabled
+  MIXUP_SWITCH_PROB: 0.5
+  # How to apply mixup/cutmix params. Per "batch", "pair", or "elem"
+  MIXUP_MODE: 'batch'
+
+TEST:
+  CROP: False
+IPU:
+  REPLIC: 1
+  GA: 128
+  DEVIterations: 1
+  IPUS: 1
+  PIPELINE: [2,2,3,3,5,5,2,2]
+#[4, 4, 8 , 8]
+#134 out[4,6,10,4]
+#[2,2,2,2,3,3,5,5]out --[2,2,2,2,3,3,6,4]x--[2,2,2,2,3,3,8,2]oom--[2,2,2,2,3,5,6,2]
+#stage ：2 2 18 2
+#[2,2,4,4,4,4,2,2]  [2,2,3,3,5,5,2,2]x [2,2,4,4,3,3,3,3]x
+#[3,3,3,3,3,3,3,3]x [2,2,2,2,6,6,2,2]x
+#tiny [2,3,5,2]
+
+MODEL:
+  TYPE: linear
+  DEVICE: ipu
+  NAME: swin_large__patch4_window12_224
+  DROP_PATH_RATE: 0.0
+  SWIN:
+    EMBED_DIM: 192
+    DEPTHS: [ 2, 2, 18, 2 ]
+    NUM_HEADS: [ 6, 12, 24, 48 ]
+    WINDOW_SIZE: 12
