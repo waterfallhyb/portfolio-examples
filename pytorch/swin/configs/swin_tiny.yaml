@@ -1,5 +1,4 @@
 DATA:
-  DATA_PATH: '/path/to/imagenet'
   DATASET: 'imagenet'
   IMG_SIZE: [224,224]
   INTERPOLATION: 'bicubic'
@@ -10,11 +9,11 @@ DATA:
   BATCH_SIZE: 4
 
 IPU:
-  REPLIC: 4
-  GA: 64
-  DEVIterations: 1
+  NUM_REPLICAS: 4
+  GRADIENT_ACCUMULATION_STEPS: 64
+  DEV_ITERATIONS: 1
   IPUS: 4
-  PIPELINE: [2, 3, 5, 2]
+  LAYERS_PER_IPU: [2, 3, 5, 2]
 
 TRAIN:
   START_EPOCH: 0
@@ -29,9 +28,6 @@ TRAIN:
   # Auto resume from latest checkpoint
   AUTO_RESUME: True
   # Gradient accumulation steps
-  # could be overwritten by command line argument
-  ACCUMULATION_STEPS: 0
-  # Whether to use gradient checkpointing to save memory
   # could be overwritten by command line argument
   USE_CHECKPOINT: False
   # LR scheduler
@@ -51,8 +47,6 @@ TRAIN:
     BETAS: (0.9, 0.999)
     # SGD momentum
     MOMENTUM: 0.9
-
-OUTPUT: '/localdata/gongboh/workspace/swin_pretrain/output/tiny_16_32/'
 PRECISION: ['half','float']
 AUG:
   SSL_AUG: True
@@ -86,7 +80,7 @@ MODEL:
   NUM_CLASSES: 1000
   DEVICE: ipu
   NAME: swin_tiny__patch4_window7_224
-  DROP_PATH_RATE: 0.0
+  DROP_PATH_RATE: 0.2
   SWIN:
     EMBED_DIM: 96
     DEPTHS: [ 2, 2, 6, 2 ]

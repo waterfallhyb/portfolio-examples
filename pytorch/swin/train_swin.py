@@ -21,7 +21,7 @@ from config import get_config
 from models.build import build_pipeline as build_model
 from timm.loss import LabelSmoothingCrossEntropy, SoftTargetCrossEntropy
 from optimizer import build_optimizer
-from utils import AverageMeter, get_lr_scheduler
+from utils import AverageMeter, get_lr_scheduler, load_pretrained
 from options import get_options
 import poptorch
 import pdb
@@ -51,7 +51,23 @@ def parse_option():
         metavar="FILE",
         help='path to config file',
     )
-
+    parser.add_argument(
+        '--data-path',
+        type=str,
+        required=True,
+        metavar="FILE",
+        help='path to dataset')
+    parser.add_argument(
+        '--output',
+        type=str,
+        required=True,
+        metavar="FILE",
+        help='path to save output files')
+    parser.add_argument(
+        '--pretrained-model',
+        type=str,
+        default=None,
+        help='path to init checkpoint when fine tune models')
     parser.add_argument(
         '--batch-size',
         type=int,
@@ -70,11 +86,6 @@ def parse_option():
             'cpu',
             'ipu',
             'gpu'])
-    parser.add_argument(
-        '--alignment',
-        action='store_true',
-        help='if alignment fwd or bwd')
-    parser.add_argument('--half', action='store_true', help='use half')
     parser.add_argument(
         '--resume',
         default='',
@@ -110,20 +121,20 @@ def save_checkpoint(config, epoch, model, optimizer, lr_scheduler, loss):
     if not os.path.exists(os.path.join(config.OUTPUT)):
         os.makedirs(os.path.join(config.OUTPUT))
     save_path = os.path.join(config.OUTPUT, f'ckpt_epoch_{epoch}_loss_{str(loss)}.pth')
-
     torch.save(save_state, save_path)
 
 
-def get_random_datum(precision):
+def get_random_datum(config):
     result = []
-    if precision == 'half':
+    batch_size = config.DATA.BATCH_SIZE * config.IPU.NUM_REPLICAS * config.IPU.GRADIENT_ACCUMULATION_STEPS
+    if config.PRECISION[0] == 'half':
         use_half = True
     else:
         use_half = False
 
-    dataset = GeneratedDataset(shape=[3, 384, 384], size=1024,  # 1024 for global batch
+    dataset = GeneratedDataset(shape=[3, config.DATA.IMG_SIZE[0], config.DATA.IMG_SIZE[0]],  # 1024 for global batch
                                half_precision=use_half)  # use_half)
-    data = (dataset[i] for i in range(1024))
+    data = (dataset[i] for i in range(batch_size))
     for batches in zip(*data):
         result.append(torch.stack(batches))
     return result
@@ -151,8 +162,8 @@ class GeneratedDataset(Dataset):
         return synthetic_data, synthetic_label
 
 
-def Compile_model(poptorch_model, mixup_fn, log_path, precision):
-    datum = get_random_datum(precision[0])
+def Compile_model(poptorch_model, mixup_fn, log_path, config):
+    datum = get_random_datum(config)
     (pre_input, pre_label) = datum
     if mixup_fn is not None:
         pre_input, pre_label = mixup_fn(pre_input, pre_label)
@@ -190,7 +201,7 @@ def train(args, opts, config):
         model.half()
     optimizer = build_optimizer(config, model)
     model = poptorch.trainingModel(model.train(), opts, optimizer=optimizer)
-    Compile_model(model, mixup_fn, log_path, precision=config.PRECISION)
+    Compile_model(model, mixup_fn, log_path, config)
     resume_epoch = None
     resume_opt = True
     if args.resume:
@@ -199,6 +210,9 @@ def train(args, opts, config):
             args.resume,
             optimizer=optimizer if resume_opt else None
         )
+    else:
+        if config.PRETRAINED:
+            load_pretrained(config, model)
     lr_scheduler = build_scheduler(config, optimizer, len(data_loader_train))
     start_epoch = 0
     if resume_epoch is not None:

@@ -2,13 +2,7 @@
 
 First, Install the Poplar SDK following the instructions in the Getting Started guide for your IPU system. Make sure to source the `enable.sh` scripts for poplar and popART.
 
-Then, create a virtual environment, install the required packages and build the custom ops.
-
-```console
-virtualenv venv -p python3.6
-source venv/bin/activate
-pip install -r requirements.txt
-```
+Then, create a virtual environment, install the required packages by 'pip install -r requirements.txt'.
 
 
 ## Datasets
@@ -30,7 +24,7 @@ Then modify the DATA.DATA_PATH parameter in config we use into ImageNet's path
 ## Qucik start
 ImageNet1k training(default is fp32.32):
 ```console
-bash train_swin.sh
+python train_swin.py --cfg ./configs/swin_tiny.yaml --data-path ./data/imagenet1k --output ./output/swin_tiny_224/
 ```
 
 ## Run the application
@@ -47,10 +41,12 @@ Acc as follows:
 | tiny  |   224      |    16.32  |  pod16  |    81.29%   |
 | tiny  |   224      |    32.32  |  pod16  |    81.21%   |
 | tiny  |   224      |     mix   |  v100   |  81.3%(SOTA)|
-| base  |   224      |    32.32  |  pod16  |    82.9%    |
+| base  |   224      |    32.32  |  pod16  |    83.5%    |
 | base  |   224      |     mix   |  v100   |  83.5%(SOTA)|
-| base  |   384      |    32.32  |  pod16  |    83.8%    |
+| base  |   384      |    32.32  |  pod16  |    84.47%    |
 | base  |   384      |     mix   |  v100   |  84.5%(SOTA)|
+| large |   224      |    32.32  |  pod16  |    86.27%    |
+| large |   224      |     mix   |  v100   |  86.3%(SOTA)|
 
 Once the training finishes, you can validate accuracy:
 ```console
@@ -60,24 +56,23 @@ python3 validate.py --cfg ./configs/swin_**.yaml --checkpoint ./output/*/*/.../c
 ## Licensing
 This application is licensed under Apache License 2.0. Please see the LICENSE file in this directory for full details of the license conditions.
 
-The following files are created by Graphcore and are licensed under Apache License, Version 2.0  (<sup>*</sup> means additional license information stated following this list):
-* train_swin.py
-* validate.py
-* options.py
-* models/gelu.py
+The following files are created by Graphcore and are licensed under Apache License, Version 2.0 :
+* configs/*
+* dataset/build_ipu.py
 * models/build.py
-* dataset/build_ipu.py  
+* options.py
 * README.md
 * swin_test.py
+* train_swin.py
 * utils.py
-
+* validate.py
 The following files include code derived from this [repo](https://github.com/microsoft/Swin-Transformer) which uses Microsoft and MIT license:
-* model/swin_transformer.py
+* config.py
 * dataset/cached_image_folder.py
 * dataset/samplers.py
 * dataset/zipreader.py
-* config.py
 * lr_scheduler.py
+* model/swin_transformer.py
 * optimizer.py
 * train_swin.sh
 

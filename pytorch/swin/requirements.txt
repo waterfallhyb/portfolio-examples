@@ -1,5 +1,4 @@
 --find-links https://download.pytorch.org/whl/torch_stable.html
-torch==1.10.0+cpu
 torchvision==0.11.1+cpu
 timm==0.4.5
 tlt==0.1.0

@@ -18,13 +18,12 @@ import poptorch
 
 def get_options(config):
     opts = poptorch.Options()
-    opts._Popart.set('swapLimitScheduler', 60)
-    ipu_list = [0] if config.IPU.PIPELINE is None else config.IPU.PIPELINE
+    ipu_list = [0] if config.IPU.LAYERS_PER_IPU is None else config.IPU.LAYERS_PER_IPU
     mem_prop = {f'IPU{i}': 0.15 for i, _ in enumerate(ipu_list)}
     opts.autoRoundNumIPUs(True)
-    opts.Training.gradientAccumulation(config.IPU.GA)
-    opts.deviceIterations(config.IPU.DEVIterations)
-    opts.replicationFactor(config.IPU.REPLIC)
+    opts.Training.gradientAccumulation(config.IPU.GRADIENT_ACCUMULATION_STEPS)
+    opts.deviceIterations(config.IPU.DEV_ITERATIONS)
+    opts.replicationFactor(config.IPU.NUM_REPLICAS)
     opts.setExecutionStrategy(
         poptorch.PipelinedExecution(
             poptorch.AutoStage.SameAsIpu))
@@ -32,7 +31,6 @@ def get_options(config):
         poptorch.ReductionType.Mean)
     opts.setAvailableMemoryProportion(mem_prop)
     opts.enableExecutableCaching('./cachedir')
-    opts.outputMode(poptorch.OutputMode.All)
     # Enable patterns for better throughput and memory reduction
     opts._Popart.set("subgraphCopyingStrategy", int(
         popart.SubgraphCopyingStrategy.JustInTime))

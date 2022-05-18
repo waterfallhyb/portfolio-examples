@@ -141,11 +141,11 @@ _C.TRAIN.LOSS_SCALING = 128
 
 # IPU related settings
 _C.IPU = CN()
-_C.IPU.REPLIC = 1
-_C.IPU.GA = 8
-_C.IPU.DEVIterations = 1
+_C.IPU.NUM_REPLICAS = 1
+_C.IPU.GRADIENT_ACCUMULATION_STEPS = 8
+_C.IPU.DEV_ITERATIONS = 1
 _C.IPU.IPUS = 1
-_C.IPU.PIPELINE = [3, 4, 3, 2]
+_C.IPU.LAYERS_PER_IPU = [3, 4, 3, 2]
 
 
 # -----------------------------------------------------------------------------
@@ -219,6 +219,7 @@ _C.THROUGHPUT_MODE = False
 # local rank for DistributedDataParallel, given by command line argument
 _C.LOCAL_RANK = 0
 _C.PRECISION = ['half', 'float']
+_C.PRETRAINED = None
 
 
 def _update_config_from_file(config, cfg_file):
@@ -266,6 +267,13 @@ def update_config(config, args):
     except Exception as e:
         print(e)
 
+    if args.data_path:
+        config.DATA.DATA_PATH = args.data_path
+    if args.output:
+        config.OUTPUT = args.output
+    if args.pretrained_model:
+        config.PRETRAINED = args.pretrained_model
+
     try:
         if args.ema_so:
             config.MODEL.MOBY.EMA_PATH = args.ema_so
@@ -291,6 +299,7 @@ def get_config(args):
     # Return a clone so that the defaults will not be altered
     # This is for the "local variable" use pattern
     config = _C.clone()
+
     update_config(config, args)
 
     return config

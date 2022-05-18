@@ -1,7 +1,6 @@
 DATA:
-  DATA_PATH: '/localdata/cn-customer-engineering/gongboh/workspace/imagenet'
   DATASET: 'imagenet'
-  IMG_SIZE: [384,384]
+  IMG_SIZE: [224,224]
   INTERPOLATION: 'bicubic'
   ZIP_MODE: False
   CACHE_MODE: 'part'
@@ -9,21 +8,26 @@ DATA:
   NUM_WORKERS: 8
   BATCH_SIZE: 1
 
+IPU:
+  NUM_REPLICAS: 2
+  GRADIENT_ACCUMULATION_STEPS: 512
+  DEV_ITERATIONS: 1
+  IPUS: 1
+  LAYERS_PER_IPU: [4,4,4,4,3,3,1,1]
+
+
 TRAIN:
   START_EPOCH: 0
   EPOCHS: 30
   WARMUP_EPOCHS: 5
   WEIGHT_DECAY: 1e-8
-  BASE_LR: 5e-05
-  WARMUP_LR: 2e-08
-  MIN_LR: 2e-07
+  BASE_LR: 4e-05
+  WARMUP_LR: 4e-08
+  MIN_LR: 4e-07
   # Clip gradient norm
   CLIP_GRAD: 5.0
   # Auto resume from latest checkpoint
   AUTO_RESUME: True
-  # Gradient accumulation steps
-  # could be overwritten by command line argument
-  ACCUMULATION_STEPS: 0
   # Whether to use gradient checkpointing to save memory
   # could be overwritten by command line argument
   USE_CHECKPOINT: False
@@ -47,9 +51,8 @@ TRAIN:
     # SGD momentum
     MOMENTUM: 0.9
 
-OUTPUT: './output/sota_224_finetune_384_grad_norm_mean_loss_5e-5lr/'
-PRETRAINED: './sota_model/swin_base_patch4_window7_224.pth'
-PRECISION: ['half','half']
+PRETRAINED: './sota_model/swin_large_patch4_window7_224_22k.pth'
+PRECISION: ['half','float']
 AUG:
   SSL_AUG: True
   COLOR_JITTER: 0.4
@@ -76,27 +79,14 @@ AUG:
 
 TEST:
   CROP: False
-IPU:
-  REPLIC: 1
-  GA: 128
-  DEVIterations: 1
-  IPUS: 1
-  PIPELINE: [2,2,3,3,5,5,2,2]
-#[4, 4, 8 , 8]
-#134 out[4,6,10,4]
-#[2,2,2,2,3,3,5,5]out --[2,2,2,2,3,3,6,4]x--[2,2,2,2,3,3,8,2]oom--[2,2,2,2,3,5,6,2]
-#stage ：2 2 18 2
-#[2,2,4,4,4,4,2,2]  [2,2,3,3,5,5,2,2]x [2,2,4,4,3,3,3,3]x
-#[3,3,3,3,3,3,3,3]x [2,2,2,2,6,6,2,2]x
-#tiny [2,3,5,2]
 
 MODEL:
   TYPE: linear
   DEVICE: ipu
   NAME: swin_large__patch4_window12_224
-  DROP_PATH_RATE: 0.0
+  DROP_PATH_RATE: 0.2
   SWIN:
     EMBED_DIM: 192
     DEPTHS: [ 2, 2, 18, 2 ]
     NUM_HEADS: [ 6, 12, 24, 48 ]
-    WINDOW_SIZE: 12
+    WINDOW_SIZE: 7

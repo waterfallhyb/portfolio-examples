@@ -1,1 +1,1 @@
-python train_swin.py --cfg ./configs/swin_base_384.yaml
+python train_swin.py --cfg ./configs/swin_tiny.yaml --data-path /localdata/cn-customer-engineering/gongboh/workspace/imagenet --output ./output/swin_tiny_224/

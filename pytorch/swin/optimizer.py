@@ -43,7 +43,8 @@ def build_optimizer(config, model):
                           loss_scaling=config.TRAIN.LOSS_SCALING,
                           accum_type=torch.float32,
                           first_order_momentum_accum_type=torch.float32,
-                          second_order_momentum_accum_type=torch.float32)
+                          second_order_momentum_accum_type=torch.float32,
+                          max_grad_norm=config.TRAIN.CLIP_GRAD)
 
     return optimizer
 

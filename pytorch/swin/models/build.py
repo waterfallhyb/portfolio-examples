@@ -13,10 +13,7 @@
 from functools import partial
 import torch.nn as nn
 from .swin_transformer import SwinTransformer
-# from .moby_pipeline import MoBY
 import poptorch
-
-use_recompute = False
 
 
 def get_layer_ipu(pipeline):
@@ -27,6 +24,8 @@ def get_layer_ipu(pipeline):
 
 
 def set_pipeline(swin, pipeline):
+    use_recompute = False
+    '''set be True will add recompute in the middle layer's first block's mlp.drop of every pipeline'''
     layer_ipus = get_layer_ipu(pipeline)
     print(f'swin set pipeline : {pipeline}')
     index = 0
@@ -71,6 +70,7 @@ def build_pipeline(config, train_loss_fn):
         qkv_bias=config.MODEL.SWIN.QKV_BIAS,
         qk_scale=config.MODEL.SWIN.QK_SCALE,
         drop_rate=config.MODEL.DROP_RATE,
+        drop_path_rate=config.MODEL.DROP_PATH_RATE,
         ape=config.MODEL.SWIN.APE,
         patch_norm=config.MODEL.SWIN.PATCH_NORM,
         use_checkpoint=config.TRAIN.USE_CHECKPOINT,
@@ -78,5 +78,5 @@ def build_pipeline(config, train_loss_fn):
         train_loss_fn=train_loss_fn
     )
 
-    set_pipeline(model, config.IPU.PIPELINE)
+    set_pipeline(model, config.IPU.LAYERS_PER_IPU)
     return model
